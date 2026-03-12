@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   # ==========================================
   # Bases de Datos y Caché
   # ==========================================
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: chat_postgres
     restart: unless-stopped
     environment:
@@ -39,7 +37,7 @@ services:
     container_name: chat_n8n
     restart: unless-stopped
     ports:
-      - "5678:5678"
+      - "5679:5678"
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_DATABASE=n8n
