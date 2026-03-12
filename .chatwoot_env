@@ -1,0 +1,54 @@
+# ==============================================
+# Configuración Básica de Chatwoot
+# ==============================================
+
+# URL base del frontend
+FRONTEND_URL=http://localhost:3000
+
+# Clave secreta (debe ser muy larga y segura, ej: openssl rand -hex 64)
+SECRET_KEY_BASE=replace_this_with_a_super_secret_long_string_generated_by_openssl
+
+# ==============================================
+# Base de Datos PostgreSQL
+# ==============================================
+POSTGRES_HOST=postgres
+POSTGRES_DATABASE=chatwoot
+POSTGRES_USERNAME=chatwoot
+# Esta contraseña debe coincidir con la de init.sql
+POSTGRES_PASSWORD=chatwoot_password
+
+# ==============================================
+# Redis
+# ==============================================
+REDIS_URL=redis://redis:6379
+
+# ==============================================
+# Configuraciones de la Aplicación
+# ==============================================
+NODE_ENV=production
+RAILS_ENV=production
+INSTALLATION_ENV=docker
+
+# ==============================================
+# Almacenamiento (Opcional - Usando local por defecto)
+# ==============================================
+ACTIVE_STORAGE_SERVICE=local
+
+# ==============================================
+# Correo Electrónico (Necesario para notificaciones e invitar agentes)
+# ==============================================
+MAILER_SENDER_EMAIL=Chatwoot <accounts@chatwoot.local>
+SMTP_ADDRESS=
+SMTP_PORT=
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_DOMAIN=
+SMTP_ENABLE_STARTTLS_AUTO=true
+
+# ==============================================
+# Variables para Auto-Setup (Scripts de Inicialización)
+# ==============================================
+# Chatwoot no crea el admin automáticamente solo por variables de entorno,
+# pero tener estas variables listas te permitirá ejecutar comandos de Rails
+# fácilmente o usarlas en un script de seed si lo configuras.
+DEFAULT_LOCALE=es

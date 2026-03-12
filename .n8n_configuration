@@ -1,0 +1,17 @@
+{
+  "database": {
+    "type": "postgresdb",
+    "postgresdb": {
+      "database": "n8n",
+      "host": "postgres",
+      "port": 5432,
+      "user": "n8n"
+    }
+  },
+  "credentials": {
+    "overwriteEndpoint": "https://api.github.com"
+  },
+  "generic": {
+    "timezone": "America/Mexico_City"
+  }
+}

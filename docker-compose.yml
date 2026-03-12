@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Bases de Datos y Caché
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: chat_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_ROOT_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Script para inicializar las bases de datos de n8n, chatwoot, metabase y facturas
+      - ./infrastructure/docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      # Script para inicializar las tablas de facturación y logs
+      - ./database/init.sql:/docker-entrypoint-initdb.d/02-tables.sql
+    networks:
+      - backend_network
+    # No exponemos el puerto al host por seguridad, solo accesible internamente
+
+  redis:
+    image: redis:7-alpine
+    container_name: chat_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend_network
+
+  # ==========================================
+  # Orquestación e IA
+  # ==========================================
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: chat_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_CONFIG_FILES=/home/node/.n8n/.n8n_configuration
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows_backups:/home/node/.n8n/workflows_backups
+      - ./.n8n_configuration:/home/node/.n8n/.n8n_configuration
+    networks:
+      - backend_network
+    depends_on:
+      - postgres
+
+  # ==========================================
+  # Bandeja de Entrada / Derivación Humana
+  # ==========================================
+  chatwoot_web:
+    image: chatwoot/chatwoot:latest
+    container_name: chat_chatwoot_web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .chatwoot_env
+    volumes:
+      - chatwoot_data:/app/storage
+    entrypoint: docker/entrypoints/rails.sh
+    command: ['bundle', 'exec', 'rails', 's', '-p', '3000', '-b', '0.0.0.0']
+    networks:
+      - backend_network
+    depends_on:
+      - postgres
+      - redis
+
+  chatwoot_worker:
+    image: chatwoot/chatwoot:latest
+    container_name: chat_chatwoot_worker
+    restart: unless-stopped
+    env_file:
+      - .chatwoot_env
+    volumes:
+      - chatwoot_data:/app/storage
+    command: ['bundle', 'exec', 'sidekiq', '-C', 'config/sidekiq.yml']
+    networks:
+      - backend_network
+    depends_on:
+      - postgres
+      - redis
+
+  # ==========================================
+  # Análisis de Datos
+  # ==========================================
+  metabase:
+    image: metabase/metabase:latest
+    container_name: chat_metabase
+    restart: unless-stopped
+    ports:
+      # Mapeamos al puerto 3001 en el host para evitar conflicto con Chatwoot
+      - "3001:3000"
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_DBNAME=metabase
+      - MB_DB_PORT=5432
+      - MB_DB_USER=metabase
+      - MB_DB_PASS=${METABASE_DB_PASSWORD}
+      - MB_DB_HOST=postgres
+    volumes:
+      - metabase_data:/metabase.db
+    networks:
+      - backend_network
+    depends_on:
+      - postgres
+
+networks:
+  backend_network:
+    driver: bridge
+    name: chat_backend_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
+  chatwoot_data:
+  metabase_data:
