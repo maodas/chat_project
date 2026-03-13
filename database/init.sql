@@ -37,3 +37,5 @@ INSERT INTO chat_logs (id_interaccion, departamento, duracion_segundos, tema_pri
 ('INT-002', 'Soporte', 300, 'Estado de reparación', '2023-10-10 11:30:00'),
 ('INT-003', 'Facturación', 180, 'Consulta de saldo', '2023-10-10 14:45:00')
 ON CONFLICT DO NOTHING;
+
+--.--
