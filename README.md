@@ -138,3 +138,7 @@ Este proyecto está bajo la Licencia [MIT](LICENSE) - mira el archivo [LICENSE.m
 
 ---
 *Desarrollado con ❤️ para revolucionar la atención al cliente en talleres mecánicos.*
+
+## Puntos pendientes
+   - Deploy en Google Cloud
+   - Verificacion de número con Meta
