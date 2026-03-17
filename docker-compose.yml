@@ -99,12 +99,26 @@ services:
   # ==========================================
   # Análisis de Datos
   # ==========================================
+  analytics_db:
+    image: postgres:15-alpine
+    container_name: chat_analytics_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: insights_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - analytics_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+
   metabase:
     image: metabase/metabase:latest
     container_name: chat_metabase
-    restart: unless-stopped
+    restart: always
     ports:
-      # Mapeamos al puerto 3001 en el host para evitar conflicto con Chatwoot
       - "3001:3000"
     environment:
       - MB_DB_TYPE=postgres
@@ -118,7 +132,7 @@ services:
     networks:
       - backend_network
     depends_on:
-      - postgres
+      - analytics_db
 
 networks:
   backend_network:
@@ -131,3 +145,4 @@ volumes:
   n8n_data:
   chatwoot_data:
   metabase_data:
+  analytics_data:
