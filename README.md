@@ -1,144 +1,140 @@
-# 🛠️ Sistema de Chat Inteligente y Enrutamiento para Taller Mecánico
+# Ecosistema de Inteligencia Operativa y Atención al Cliente con IA 🚀
 
-[![Estado del Proyecto](https://img.shields.io/badge/Estado-En_Desarrollo-yellow.svg)](https://github.com/tu-usuario/tu-repo)
-[![Licencia](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
-[![Versión Node.js](https://img.shields.io/badge/Node.js-%3E%3D_18-brightgreen.svg)](https://nodejs.org/)
+![Arquitectura del Proyecto](https://img.shields.io/badge/Architecture-Microservices-blue.svg)
+![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED.svg?logo=docker)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991.svg?logo=openai)
+![Status](https://img.shields.io/badge/Status-Production_Ready-success.svg)
 
-## 📝 Descripción
+## 📌 Título y Descripción Ejecutiva
 
-Este proyecto es una solución integral de atención al cliente diseñada específicamente para un taller mecánico. Combina el poder de la Inteligencia Artificial para la resolución automatizada de consultas frecuentes (citas, estado de reparación, presupuestos básicos) con un sistema de enrutamiento inteligente (Skills-based Routing) para escalar problemas complejos a los agentes humanos adecuados. Además, incluye paneles de análisis (Dashboards) para monitorear el rendimiento del centro de atención y la satisfacción del cliente.
+Bienvenido al **Ecosistema de Inteligencia Operativa y Atención al Cliente**, una solución de arquitectura moderna diseñada para revolucionar la gestión de soporte y análisis de interacciones de usuarios. 
 
-**Objetivos principales:**
-- Reducir el tiempo de espera de los clientes a través de automatización (Chatbot IA).
-- Optimizar la carga de trabajo de los mecánicos y el personal administrativo.
-- Proveer métricas en tiempo real sobre la operación del taller.
+**Valor de Negocio:** Este proyecto logra la **reducción del tiempo de auditoría de servicio al cliente al 0% mediante Inteligencia Artificial**. Al automatizar la extracción de sentimiento, categorización de problemas y generación de resúmenes ejecutivos tras el cierre de cada ticket, el sistema elimina la necesidad de revisión manual de chats, habilitando la toma de decisiones basada en datos empíricos y analítica en tiempo real.
 
-## 🏗️ Arquitectura del Sistema
+---
 
-*(Describe aquí la arquitectura de tu sistema a alto nivel. Puedes mencionar el patrón arquitectónico usado, como microservicios o monolito modular, y cómo interactúan los diferentes componentes. Se recomienda incluir un diagrama aquí usando herramientas como Mermaid, Draw.io o Excalidraw).*
+## 🏗 Arquitectura y Tecnologías
 
-**Componentes Principales:**
-- **Chatbot API:** [Completar con detalles de implementación, ej. Node.js + LangChain/OpenAI]
-- **Routing Service:** [Completar con el motor de enrutamiento, ej. Colas de RabbitMQ/Redis]
-- **Analytics Service:** [Completar con el procesamiento de datos, ej. Node.js + PostgreSQL]
-- **Frontend Dashboard:** [Completar con el stack, ej. React + Tailwind CSS]
-- **Infraestructura:** [Completar con los detalles de despliegue, ej. Docker, AWS ECS]
+Todo el ecosistema está completamente contenerizado y orquestado bajo una red interna privada para maximizar la seguridad y facilitar el despliegue.
 
-## 🚀 Tecnologías Utilizadas
+*   **Docker & Docker Compose:** Tecnologías base de contenerización y orquestación. Garantizan un entorno reproducible, escalable y aislado bajo una red privada (`backend_network`).
+*   **Ngrok:** Actúa como túnel seguro, exponiendo el puerto local para recibir los eventos (Webhooks) directamente desde la API de WhatsApp.
+*   **Chatwoot:** Plataforma centralizada de bandeja de entrada omnicanal. Actúa como la interfaz principal donde los agentes humanos gestionan derivaciones, chatean con el cliente y resuelven tickets.
+*   **n8n:** Motor de orquestación y automatización de flujos de trabajo (workflows). Recibe eventos de Chatwoot (ej. "ticket cerrado"), procesa la información y se encarga de la integración con servicios externos e internos.
+*   **OpenAI (gpt-4o-mini):** El núcleo analítico del sistema. n8n envía el historial de chat a la API de OpenAI para extraer de manera estructurada (JSON) el sentimiento del cliente, la categoría del incidente y generar un resumen ejecutivo de la interacción.
+*   **PostgreSQL:** 
+    *   Una instancia principal (con soporte para `pgvector`) que aloja las bases de datos transaccionales para n8n, Chatwoot y Metabase.
+    *   Una instancia dedicada (`analytics_db`) para almacenar el JSON estructurado con los insights extraídos por la IA, optimizada para analíticas.
+*   **Redis:** Caché en memoria y gestor de colas de tareas de fondo utilizado por los workers de Chatwoot (`sidekiq`).
+*   **Metabase:** Herramienta de Business Intelligence (BI) conectada a la base de datos de analíticas. Consume los datos procesados por OpenAI para generar visualizaciones y dashboards interactivos en tiempo real.
 
-- **Backend:** Node.js, Express/NestJS (Especificar)
-- **Frontend:** React.js / Vue.js (Especificar)
-- **Base de Datos:** PostgreSQL / MongoDB (Especificar)
-- **Caché y Colas:** Redis / RabbitMQ (Especificar)
-- **IA/LLM:** OpenAI API / HuggingFace (Especificar)
-- **DevOps:** Docker, Docker Compose, GitHub Actions
+---
 
-## 📂 Estructura del Proyecto
+## 📂 Estructura del Repositorio
+
+La estructura del proyecto está organizada siguiendo las mejores prácticas de DevOps y despliegue de infraestructuras:
 
 ```text
-chat_project/
-├── services/                 # Servicios backend (Microservicios/Módulos)
-│   ├── chatbot_api/          # Servicio de IA conversacional
-│   ├── routing_service/      # Lógica de distribución a agentes
-│   └── analytics_service/    # Procesamiento de métricas y reportes
-├── frontend/                 # Aplicaciones frontend
-│   ├── chat_widget/          # Widget de chat integrable para clientes
-│   └── admin_dashboard/      # Panel de control para agentes y administradores
-├── infrastructure/           # Configuración de infraestructura
-│   ├── docker/               # Archivos Docker y Docker Compose
-│   └── terraform/            # (Opcional) Scripts de IaC
-├── docs/                     # Documentación técnica y diagramas
-├── scripts/                  # Scripts de utilidad (migraciones, seeding)
-└── .github/workflows/        # Pipelines de CI/CD
+/
+├── .env.example             # Plantilla de variables de entorno globales
+├── .chatwoot_env            # Configuración específica para la instancia de Chatwoot
+├── docker-compose.yml       # Orquestador de la infraestructura (servicios, redes, volúmenes)
+├── database/
+│   └── init.sql             # Esquemas de inicialización para tablas de facturación y logs
+├── infrastructure/
+│   └── docker/
+│       └── init.sql         # Script de creación de bases de datos para los microservicios
+├── workflows_backups/       # Los flujos de n8n exportados en formato .json para su fácil importación
+└── ...
 ```
+
+---
 
 ## ⚙️ Requisitos Previos
 
-Asegúrate de tener instalado lo siguiente en tu entorno local:
+Para desplegar este entorno en una máquina o servidor, asegúrese de cumplir con los siguientes requisitos:
 
-- [Docker](https://www.docker.com/products/docker-desktop) y Docker Compose
-- [Node.js](https://nodejs.org/en/) (v18 o superior)
-- (Cualquier otra dependencia global necesaria, ej. CLI de AWS, pnpm, yarn)
-
-## 🛠️ Instalación y Configuración Local
-
-Sigue estos pasos para levantar el entorno de desarrollo local:
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/tu-usuario/tu-repo.git
-   cd chat_project
-   ```
-
-2. **Configurar las variables de entorno:**
-   - Copia el archivo de ejemplo en la raíz y en cada servicio:
-   ```bash
-   cp .env.example .env
-   # (Repetir para los servicios según sea necesario)
-   ```
-   - **IMPORTANTE:** Edita los archivos `.env` recién creados y proporciona las claves necesarias (ej. `OPENAI_API_KEY`, credenciales de DB).
-
-3. **[Paso para instalar dependencias si es necesario a nivel global o en servicios específicos]**
-   ```bash
-   # Ejemplo:
-   npm install
-   # o si usas lerna/turborepo:
-   npm run bootstrap
-   ```
-
-4. **[Paso para levantar contenedores / base de datos]**
-   ```bash
-   # Ejemplo:
-   docker-compose up -d
-   ```
-
-5. **[Paso para correr migraciones de base de datos]**
-   ```bash
-   # Ejemplo:
-   npm run db:migrate
-   ```
-
-6. **[Paso para iniciar el servidor de desarrollo]**
-   ```bash
-   # Ejemplo:
-   npm run dev
-   ```
-
-## 🧪 Pruebas
-
-*(Explica cómo ejecutar la suite de pruebas automatizadas).*
-
-```bash
-# Ejecutar pruebas unitarias
-npm run test
-
-# Ejecutar pruebas de integración
-npm run test:integration
-```
-
-## 🛣️ Roadmap
-
-- [x] Diseño de la arquitectura inicial.
-- [ ] Implementación de la autenticación JWT.
-- [ ] Integración de la API del LLM para el Chatbot.
-- [ ] Desarrollo del algoritmo de enrutamiento basado en habilidades.
-- [ ] Creación de los endpoints de analíticas.
-- [ ] Desarrollo del Dashboard Frontend.
-- [ ] Configuración del pipeline CI/CD completo.
-
-## 🤝 Contribución
-
-*(Instrucciones si aceptas contribuciones de otros desarrolladores).*
-
-Por favor, lee [CONTRIBUTING.md](CONTRIBUTING.md) para detalles sobre nuestro código de conducta y el proceso para enviarnos pull requests.
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia [MIT](LICENSE) - mira el archivo [LICENSE.md](LICENSE) para detalles.
+1.  **Motor de Contenedores:** Docker y Docker Compose (v2.x recomendado) instalados y ejecutándose.
+2.  **Git:** Para clonar el repositorio.
+3.  **Cuenta de OpenAI:** Clave de API válida con acceso a los modelos `gpt-4o-mini`.
+4.  **Cuenta de Ngrok:** Para exponer los endpoints locales hacia Internet (esencial para recibir webhooks de WhatsApp).
+5.  **Puertos Disponibles:** Asegúrese de tener libres los siguientes puertos en el host: `3000` (Chatwoot), `3001` (Metabase), `5679` (n8n), y `5433` (Analytics DB).
 
 ---
-*Desarrollado con ❤️ para revolucionar la atención al cliente en talleres mecánicos.*
 
-## Puntos pendientes
-   - Deploy en Google Cloud
-   - Verificacion de número con Meta
+## 🚀 Instalación y Despliegue
+
+Siga las siguientes instrucciones paso a paso para levantar la infraestructura completa.
+
+### 1. Clonar el repositorio
+
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd chat_project
+```
+
+### 2. Configurar Variables de Entorno
+
+El proyecto requiere archivos `.env` para inyectar credenciales y configuraciones de forma segura.
+
+*   Copie la plantilla `.env.example` y configure sus contraseñas y claves (incluyendo la API de OpenAI):
+    ```bash
+    cp .env.example .env
+    ```
+*   Asegúrese de configurar correctamente las variables de Chatwoot en el archivo `.chatwoot_env` (o `.chatwoot_env.save` si lo está restaurando).
+
+### 3. Levantar los Servicios
+
+Utilice Docker Compose para construir y levantar todos los contenedores en modo 'detached' (segundo plano):
+
+```bash
+docker compose up -d
+```
+
+Puede verificar el estado de los contenedores ejecutando: `docker compose ps`.
+
+---
+
+## 🛠 Configuración Post-Despliegue
+
+Una vez que los contenedores estén corriendo (`Up`), es necesario realizar configuraciones a nivel aplicativo para unificar el ecosistema:
+
+### A. Exponer Chatwoot a Internet
+
+Para que WhatsApp (u otras integraciones externas) pueda comunicarse con el sistema, utilice Ngrok para exponer el puerto de Chatwoot:
+
+```bash
+ngrok http 3000
+```
+*Copie la URL pública generada por Ngrok (ej. `https://xxxx-xx-xx.ngrok.io`).*
+
+### B. Configurar Webhooks Internos (Chatwoot ➔ n8n)
+
+Para notificar a n8n cuando un ticket se cierra:
+1. Ingrese a **Chatwoot** (`http://localhost:3000`).
+2. Diríjase a la configuración de su Bandeja de Entrada > **Integraciones** > **Webhooks**.
+3. Añada un nuevo Webhook apuntando a n8n. Dado que ambos residen en la red de Docker (`backend_network`), utilice la URL interna:
+   `http://n8n:5678/webhook/tu-ruta-de-webhook` 
+   *(Nota: si necesita acceder externamente a n8n, está expuesto en el puerto `5679` del host).*
+
+### C. Importar Flujos de IA en n8n
+
+1. Acceda a **n8n** ingresando a `http://localhost:5679`.
+2. Vaya al apartado de **Workflows** y seleccione **Import from File**.
+3. Seleccione los archivos `.json` ubicados en el directorio `workflows_backups/` del repositorio. Estos flujos ya contienen la lógica de conexión con OpenAI y la inserción a PostgreSQL.
+4. Configure sus credenciales (Nodos de Postgres y OpenAI) dentro de n8n para activar el flujo.
+
+### D. Conectar Metabase a los Datos Analíticos
+
+1. Acceda a **Metabase** en `http://localhost:3001` y complete la configuración inicial.
+2. Añada una nueva base de datos.
+3. Configure la conexión hacia la base de datos analítica usando los parámetros definidos en el contenedor `analytics_db` (accesible internamente):
+   *   **Host:** `analytics_db`
+   *   **Port:** `5432` *(puerto interno del contenedor)*
+   *   **Database Name:** `insights_db`
+   *   **Username:** `admin`
+   *   **Password:** `adminpassword`
+4. ¡Listo! Comience a armar dashboards en tiempo real consumiendo los JSON estructurados con los insights de la IA.
+
+---
+*Desarrollado con ❤️ y las mejores prácticas de Arquitectura Cloud / DevOps.*

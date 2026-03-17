@@ -1,0 +1,800 @@
+{
+  "name": "Chatbot: Atencion al Cliente",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp",
+        "options": {}
+      },
+      "id": "f16f1611-283d-4091-b186-1cd28ee722b5",
+      "name": "Webhook POST - Mensajes",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -512,
+        392
+      ],
+      "webhookId": "whatsapp-webhook-post"
+    },
+    {
+      "parameters": {
+        "path": "whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "45fc5ece-1aa1-4adb-afd5-b74152d3bbc2",
+      "name": "Webhook GET - Verificación Meta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -512,
+        64
+      ],
+      "webhookId": "8d608c20-cfc1-4472-b11f-16b1f8e9051b"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/plain"
+              }
+            ]
+          }
+        }
+      },
+      "id": "2d42ebb6-650e-4c2d-a832-1c2485effdfb",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -288,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $node[\"Webhook POST - Mensajes\"].json.body.content }}",
+        "options": {
+          "systemMessage": "Eres el asistente virtual estrella de un taller automotriz integral en Guatemala. Tu tono debe ser el de un mecánico experto de confianza: amigable, casual, pero siempre respetuoso y profesional. Eres directo y demuestras interés genuino en ayudar a los clientes con sus vehículos.\n\nTUS OBJETIVOS PRINCIPALES:\n\n    Saludar y presentarte brevemente de forma cordial.\n\n    Identificar qué necesita el cliente y dirigirlo al departamento adecuado (Taller Mecánico, Electromecánico, Enderezado y Pintura, Venta de Repuestos, Asistencia de Grúa, Carwash, o Administración/Facturación).\n\n    Resolver dudas generales (horarios, ubicaciones). Nuestro horario es de Lunes a Viernes de 8:00 AM a 6:00 PM y Sábados de 8:00 AM a 1:00 PM.\n\n    Si el cliente pregunta por el estado de cuenta de su flotilla o facturas, indícale que puedes ayudarle a consultar esa información (temporalmente, diles que el sistema de facturación está en mantenimiento, pero que pronto podrás dárselo).\n\n    Si no puedes resolver una duda o el cliente necesita hablar con un humano, indícale amablemente que transferirás la conversación a un asesor especializado.\n\nREGLAS DE ORO:\n\n    Nunca uses un lenguaje robótico o excesivamente formal.\n\n    Mantén tus respuestas concisas y claras. La gente que escribe a un taller suele tener prisa o un problema con su carro.\n\n    Si te preguntan algo fuera del ámbito automotriz o del taller, responde amablemente que tu especialidad son los motores y los servicios del taller.\n\n    Utiliza modismos guatemaltecos ligeros si es natural (ej. 'carro' en vez de 'coche', 'nítido', 'buena onda'), pero mantén la profesionalidad.\n\nSi el cliente pregunta por su estado de cuenta o facturas, tienes acceso directo a la herramienta 'Consultar_Facturas'. No pidas el número de teléfono al cliente, ya lo tienes en el contexto como whatsapp_id.\n\nREGLA ESTRICTA: Si el cliente pide hablar con un humano, un agente o un asesor, NO generes ninguna respuesta conversacional. Tu ÚNICA respuesta debe ser exactamente esta palabra: TRANSFERIR_CHAT. No agregues puntos, ni saludos, solo esa palabra."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        632,
+        392
+      ],
+      "id": "fbd0f511-66b5-46ae-b82a-cf1eb99d718f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        616
+      ],
+      "id": "2a68a3c4-d619-4251-a7f0-911625e6f4fa",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "j3GcWeCaamiFPEsl",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.whatsapp_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        512,
+        616
+      ],
+      "id": "d46c9bda-278f-40bc-ab2a-bfd4656e1cbe",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "uxjdbeeF3EXYs6Do",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Insert rows in Esta herramienta sirve para consultar los nombres, precios y descripciones de los servicios disponibles en el taller. Úsala cuando el cliente pregunte por precios o qué servicios ofrecemos.a table in Postgres",
+        "operation": "executeQuery",
+        "query": "SELECT * FROM servicios;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        640,
+        616
+      ],
+      "id": "63d68887-cd37-45b7-a763-218aad3f422a",
+      "name": "Herramienta_Servicios",
+      "credentials": {
+        "postgres": {
+          "id": "uxjdbeeF3EXYs6Do",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Execute a SQL query in PostgresESTA ES LA HERRAMIENTA PRIORITARIA para cualquier duda sobre dinero, facturas, estados de cuenta, saldos pendientes o historial de pagos. Úsala siempre que el cliente use palabras como 'factura', 'debo', 'pago', 'cuenta' o 'camiones'. El ID del cliente para la consulta es: {{ $json.whatsapp_id }}.",
+        "operation": "executeQuery",
+        "query": "SELECT * FROM invoices WHERE id_cliente = '{{ $('Webhook POST - Mensajes').first().json.body.sender.phone_number.replace(\"+\", \"\") }}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        768,
+        616
+      ],
+      "id": "45f3d405-6847-4baf-ada5-0020448c4e99",
+      "name": "Consultar_Facturas",
+      "credentials": {
+        "postgres": {
+          "id": "uxjdbeeF3EXYs6Do",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Usá esta herramienta obligatoriamente antes de transferir a un humano si es la primera vez que el cliente interactúa con el sistema. Sirve para dar de alta al cliente en la base de datos.",
+        "method": "POST",
+        "url": "http://chatwoot_web:3000/api/v1/accounts/1/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $('Extraer datos del Cliente').item.json.whatsapp_name }}\",\n  \"phone_number\": \"+{{ $('Extraer datos del Cliente').item.json.whatsapp_id }}\",\n  \"inbox_id\": 1\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        616
+      ],
+      "id": "8a1956f4-c063-4164-be5a-da986c3c6bd5",
+      "name": "CREAR",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "DyDJWUqhGyni8rXF",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca un contacto por su número de teléfono. Si el contacto existe, devuelve su ID interno. Úsala antes de transferir a un humano.",
+        "url": "http://chatwoot_web:3000/api/v1/accounts/1/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $('Extraer datos del Cliente').item.json.whatsapp_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        1024,
+        616
+      ],
+      "id": "00f36dc3-13e2-4f1b-9633-a29ee981cecd",
+      "name": "BUSCAR",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "DyDJWUqhGyni8rXF",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "999fcf29-fcfd-4cc7-b1f6-4218985ec60e",
+              "leftValue": "={{ $json.body.message_type }}",
+              "rightValue": "incoming",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -288,
+        392
+      ],
+      "id": "76ada4ec-8fd4-4c30-b1a0-bff3a8260c57",
+      "name": "Filtro:Mensaje Entrante"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4c2de231-c791-4b4a-8de0-b16b7db5eb88",
+              "leftValue": "={{ $('Webhook POST - Mensajes').item.json.body.conversation.status }}",
+              "rightValue": "pending",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -64,
+        392
+      ],
+      "id": "74b841e8-4ecf-4686-9987-de25df478368",
+      "name": "Verificar ¿Hay agente asignado?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfc5cdf7-25cd-4c44-bc9d-e3b7a5c372d7",
+              "name": "whatsapp_id",
+              "value": "={{ $node[\"Webhook POST - Mensajes\"].json.body.sender.phone_number }}",
+              "type": "string"
+            },
+            {
+              "id": "bf04843d-f62e-4d53-966b-b7b79b7457d5",
+              "name": "pregunta_usuario",
+              "value": "={{ $node[\"Webhook POST - Mensajes\"].json.body.entry[0].changes[0].value.messages[0].text.body }}",
+              "type": "string"
+            },
+            {
+              "id": "5c4ed395-3842-49a4-b81f-9edf7c342f5f",
+              "name": "whatsapp_name",
+              "value": "={{ $node[\"Webhook POST - Mensajes\"].json.body.entry[0].changes[0].value.contacts[0].profile.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        392
+      ],
+      "id": "778497ed-35aa-4468-a1c0-1ec4bb002c3c",
+      "name": "Extraer datos del Cliente"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "TRANSFERIR_CHAT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "0ebe4c4b-6375-414e-a3c7-8fc1504fb9c6"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Humano"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "54d86d43-b4a2-45e9-823f-1313bbfde256",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "TRANSFERIR_CHAT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notContains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Bot"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1232,
+        392
+      ],
+      "id": "bf5ed387-3597-4883-a79c-4d9b5283ec91",
+      "name": "Enrutador: Acción de IA"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://chatwoot_web:3000/api/v1/accounts/1/conversations/{{ $node[\"Webhook POST - Mensajes\"].json.body.conversation.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "pHxNYhhjd3aGpJoKfJia2vMa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.output }}"
+            },
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1456,
+        488
+      ],
+      "id": "c3865b15-4eec-438f-85d4-771613c14a21",
+      "name": "Chatwoot: Envió respuesta IA"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://chatwoot_web:3000/api/v1/accounts/1/conversations/{{ $node[\"Webhook POST - Mensajes\"].json.body.conversation.id }}/assignments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "pHxNYhhjd3aGpJoKfJia2vMa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"assignee_id\": 1}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1456,
+        296
+      ],
+      "id": "875098d9-48a7-4f36-843f-0c894070fdaf",
+      "name": "Chatwoot: Asignar a agente"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://chatwoot_web:3000/api/v1/accounts/1/conversations/{{ $node[\"Webhook POST - Mensajes\"].json.body.conversation.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "pHxNYhhjd3aGpJoKfJia2vMa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n\"content\": \"Te estoy transfiriendo con un agente humano. Te atenderá en un momento.\",\n\"message_type\": \"outgoing\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1680,
+        296
+      ],
+      "id": "353a1464-b71f-4760-b609-87f229ab1d08",
+      "name": "Chatwoot: Aviso de espera"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT message FROM n8n_chat_histories WHERE session_id = '{{ $('Webhook POST - Mensajes').item.json.body.sender.phone_number }}' ORDER BY id DESC LIMIT 10;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1904,
+        296
+      ],
+      "id": "4d8a0296-54b9-4995-83a8-cd4a5eb1cadd",
+      "name": "Lectura historial reciente",
+      "credentials": {
+        "postgres": {
+          "id": "uxjdbeeF3EXYs6Do",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini-2025-04-14",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI-2025-04-14"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Resume los puntos clave de esta conversación para un agente humano que acaba de tomar el ticket. Sé breve (máximo 3 puntos).\n\nHistorial de mensajes:\n{{ JSON.stringify($('Lectura historial reciente').all().map(item => item.json.message)) }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        2128,
+        296
+      ],
+      "id": "0c6596ce-ea38-4c72-a1c6-f2f8dee881a5",
+      "name": "Genera Resumen para agente ",
+      "executeOnce": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "j3GcWeCaamiFPEsl",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://chatwoot_web:3000/api/v1/accounts/1/conversations/{{ $node[\"Webhook POST - Mensajes\"].json.body.conversation.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "pHxNYhhjd3aGpJoKfJia2vMa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.output[0].content[0].text }}"
+            },
+            {
+              "name": "message_type",
+              "value": "outgoing"
+            },
+            {
+              "name": "private",
+              "value": "={{ true }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2480,
+        296
+      ],
+      "id": "7a9b9516-8e44-419c-8bbf-c46106b5a4ed",
+      "name": "Crea nota privada para agente"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook GET - Verificación Meta": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook POST - Mensajes": {
+      "main": [
+        [
+          {
+            "node": "Filtro:Mensaje Entrante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Enrutador: Acción de IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Herramienta_Servicios": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar_Facturas": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREAR": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BUSCAR": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro:Mensaje Entrante": {
+      "main": [
+        [
+          {
+            "node": "Verificar ¿Hay agente asignado?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Verificar ¿Hay agente asignado?": {
+      "main": [
+        [
+          {
+            "node": "Extraer datos del Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Extraer datos del Cliente": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutador: Acción de IA": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Asignar a agente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Chatwoot: Envió respuesta IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: Asignar a agente": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Aviso de espera",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: Aviso de espera": {
+      "main": [
+        [
+          {
+            "node": "Lectura historial reciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lectura historial reciente": {
+      "main": [
+        [
+          {
+            "node": "Genera Resumen para agente ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Genera Resumen para agente ": {
+      "main": [
+        [
+          {
+            "node": "Crea nota privada para agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "a7822429-336b-4b05-8f49-fd4a0808f67b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d095180564b2c4566b95c4e6ad5da87b70c25f3fc61b953067dc3c3b39805ff2"
+  },
+  "id": "ShEeXuywt44RXBbZfU6qS",
+  "tags": []
+}

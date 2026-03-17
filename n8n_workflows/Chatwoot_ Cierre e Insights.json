@@ -1,0 +1,313 @@
+{
+  "name": "Chatwoot: Cierre e Insights",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e5dec6d4-6447-4518-84e0-a60e99bec171",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "9e8a5849-3edb-43e2-821d-8607c64ebb6c",
+      "name": "Webhook",
+      "webhookId": "e5dec6d4-6447-4518-84e0-a60e99bec171"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0f4a7694-97ef-4ded-a8a0-e291cec2238a",
+              "leftValue": "={{ $json.body.status }}",
+              "rightValue": "resolved",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "1281661b-4f18-43fe-a889-f7ebdc84f9d2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=http://chatwoot_web:3000/api/v1/accounts/1/conversations/{{ $('If').item.json.body.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "pHxNYhhjd3aGpJoKfJia2vMa"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "52eca270-65c2-4d1b-97b9-60e24a2ef24c",
+      "name": "Chatwoot: Descarga de historial"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://chatwoot_web:3000/api/v1/accounts/1/conversations/{{ $json.body.id }}/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "api_access_token",
+              "value": "pHxNYhhjd3aGpJoKfJia2vMa"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"content\": \"¡Gracias por comunicarte con nosotros! Tu consulta ha sido resuelta. Que tengas un excelente día. 🚗✨\",\n  \"message_type\": \"outgoing\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "a7da24c6-ff66-44fb-bc5b-e48e8922075a",
+      "name": "Mensaje de Despedida"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=Actúa como un analista de calidad de atención al cliente. Lee el siguiente historial de chat entre un cliente y un agente/bot, y extrae los insights clave. \n\nDebes devolver ÚNICAMENTE un objeto JSON válido con la siguiente estructura, sin texto adicional ni formato markdown:\n{\n  \"sentimiento\": \"Positivo / Neutral / Negativo\",\n  \"categoria\": \"Ventas / Soporte / Info General / Otro\",\n  \"resumen_ejecutivo\": \"Un resumen de máximo 2 líneas de lo que ocurrió\"\n}\n\nHistorial de conversación:\n{{ $json.payload.map(m => (m.sender_type === 'User' ? 'Agente: ' : 'Cliente: ') + m.content).join('\\n') }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        848,
+        -96
+      ],
+      "id": "97abde5b-f25a-49ce-8726-4a6150a52e3d",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "j3GcWeCaamiFPEsl",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "conversation_insights",
+          "mode": "list",
+          "cachedResultName": "conversation_insights"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "conversation_id": "={{ $json.body.id }}",
+            "sentimiento": "={{ JSON.parse($json.output[0].content[0].text).sentimiento }}",
+            "categoria": "={{ JSON.parse($json.output[0].content[0].text).categoria }}",
+            "resumen": "={{ JSON.parse($json.output[0].content[0].text).resumen_ejecutivo }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "sentimiento",
+              "displayName": "sentimiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumen",
+              "displayName": "resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1200,
+        -96
+      ],
+      "id": "dbf4b277-e260-47ac-a249-6d629c27a1d1",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "3sESqOhxMy6N1Yud",
+          "name": "Postgres account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Mensaje de Despedida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje de Despedida": {
+      "main": [
+        [
+          {
+            "node": "Chatwoot: Descarga de historial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chatwoot: Descarga de historial": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "a2f3a9ba-3173-45a8-9367-849800f76cf8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d095180564b2c4566b95c4e6ad5da87b70c25f3fc61b953067dc3c3b39805ff2"
+  },
+  "id": "OxfisG_PqXDlE05AH-KNz",
+  "tags": []
+}
